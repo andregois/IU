@@ -17,7 +17,8 @@
 (check-equal? (mymap add1 (list 1 2 3)) (list 2 3 4))
 (check-equal? (mymap even? (list 1 2 3)) (list #f #t #f))
 
-
+;;
+;;
 (define (reverse-symbol x)
   (cond
     [(symbol? x)(string->symbol (list->string (reverse (string->list (symbol->string x)))))]
