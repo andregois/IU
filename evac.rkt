@@ -7,18 +7,23 @@
 
 (define type-obs (make-hash))
 
+(define extend-env
+  (lambda (env fml rand)
+    `((,fml ,rand) . ,env)))
+
+(define env-lookup 
+  (lambda(env var)
+    (pmatch env    
+            [`((,x ,v) . ,rest) (if (eq? x var) v (env-lookup (cdr env) var))]
+            )))
 
 (define (extend-hash hs v T )
   (if (hash-has-key? hs v)
-      (hash-set! hs v (append (hash-ref hs v) `(,T)))
-      (hash-set! hs v `(,T)))
+      (hash-set! hs v (meet T (hash-ref hs v)))
+      (hash-set! hs v T))
   
   )
 
-
-
-
-;;; type-obs >> ( list id->type)
 
 ;;tipo de entradas
 ;((lambda (x : dyn) (prim inc (cast l1 x : dyn -> int))) (-> dyn int))
@@ -36,6 +41,7 @@
           [`(inc ,e ,label) (guard (integer? e))
                             (let [(e1 (evac env e))]
                               (+ e1 1))]
+          
           [`(dec ,e ,label) (guard (integer? e))
                             (let [(e1 (evac env e))]
                               (- e1 1))]
@@ -43,6 +49,12 @@
           [`(zero? ,e ,label) (guard (integer? e))
                               (let [(e1 (evac env e))]
                                 (zero? e1))]
+          
+          [`(cast ,label ,e : ,T1 -> ,T2) (extend-hash type-obs e (meet T1 T2)) `,e]
+          
+          [`(prim ,op ,e) (if (member op '(inc zero? dec)) 
+                              `(,op ,(evac env e))
+                              (error "operator does not exist"))]
           
           [`(if ,tst ,ths ,fhs ,label) (let ([tst1 (evac env tst)])
                                          (if (boolean? tst1) 
@@ -52,47 +64,31 @@
                                              (error "test case it is not boolean" label)
                                                  
                                                  ))]
-          [`(cast ,label ,e : ,T1 -> ,T2)]
           
           
           [`(lambda (,x : ,T1) ,e ) (extend-hash type-obs x T1 ) `(closure ,x ,T1 ,e ,env)]
           
+          [`(,e1 ,e2) (let ([v1 (evac env e1)]
+                            [v2 (evac env e2)])
+                        ; (display `(v1 ,v1 v2 ,v2))
+                      (pmatch v1
+                              [`(closure ,x ,T1 ,e ,env) (extend-hash type-obs x (meet T1 (typeof v2)))
+                                                         (evac (extend-env env x v2) e)
+                                                         
+                                                         ]))]
           
           
-          
-          
-          ))
-          
-          
-;          [`,bool (guard (boolean? bool)) bool]
-;          [`,num (guard (number? num)) num]
-;          [`(+ ,x ,y) `(+ ,x ,y)]
-;          [`(- ,x ,y) `(- ,x ,y)]
-;          [`(* ,x ,y) `(* ,x ,y)]
-;          [`(/ ,x ,y) `(/ ,x ,y)]
-;          [`(> ,x ,y) `(> ,x ,y)]
-;          [`(< ,x ,y) `(< ,x ,y)]
-;          [`(add1 ,x) (guard (number? x)) (add1 x)]
-;          [`,var (guard (symbol? var)) var]
-;          [`(if ,tst ,csq ,alt) `(if ,(evac tst env) ,(evac csq env) ,(evac alt env))]
-;          ;[`()]
-;          [`(sub1 ,x) (sub1 (evac x env))]
-;          [`(zero? ,x) `(zero? x) ]
-;          [`(lambda (,x) ,body) (local [(define x-id (gensym 'x))] `(closure (,x : ,x-id) ,body ,env))]
-;          [`(,rator ,rand) (let ([v1 (evac rator env)]
-;                                 [v2 (evac rand env)])
-;                             
-;                             (pmatch v1
-;                                     [`(closure (,x : ,id) ,e ,env2)  
-;                                      (set! type-obs `((,id --> ,(typeof v2)) . ,type-obs))                                      
-;                                      `((closure (,x : ,(typeof v2)) ,(evac e env2)) --> (typeof return) )
-;                                      
-;                                      ]
-;                                     ))]
-;          ))
-; 
 
-        
+           
+                               
+                     
+          )
+          )
+          
+
+
+          
+   
        
 
           
