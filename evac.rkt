@@ -38,22 +38,22 @@
           
           [`,num (guard (integer? num)) num]
           [`,bool (guard (boolean? bool)) bool]
-          [`(inc ,e ,label) (guard (integer? e))
+          [`(inc ,e) (guard (integer? e))
                             (let [(e1 (evac env e))]
                               (+ e1 1))]
           
-          [`(dec ,e ,label) (guard (integer? e))
+          [`(dec ,e) (guard (integer? e))
                             (let [(e1 (evac env e))]
                               (- e1 1))]
           
-          [`(zero? ,e ,label) (guard (integer? e))
+          [`(zero? ,e) (guard (integer? e))
                               (let [(e1 (evac env e))]
                                 (zero? e1))]
           
-          [`(cast ,label ,e : ,T1 -> ,T2) (extend-hash type-obs e (meet T1 T2)) `,e]
+          [`(cast ,label ,e : ,T1 -> ,T2) (extend-hash type-obs e (meet T1 T2)) (env-lookup env e)]
           
           [`(prim ,op ,e) (if (member op '(inc zero? dec)) 
-                              `(,op ,(evac env e))
+                              (evac env `(,op ,(evac env e)))
                               (error "operator does not exist"))]
           
           [`(if ,tst ,ths ,fhs ,label) (let ([tst1 (evac env tst)])
@@ -70,7 +70,7 @@
           
           [`(,e1 ,e2) (let ([v1 (evac env e1)]
                             [v2 (evac env e2)])
-                        ; (display `(v1 ,v1 v2 ,v2))
+                        (display `(v1 ,v1 v2 ,v2))
                       (pmatch v1
                               [`(closure ,x ,T1 ,e ,env) (extend-hash type-obs x (meet T1 (typeof v2)))
                                                          (evac (extend-env env x v2) e)
