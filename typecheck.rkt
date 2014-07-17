@@ -95,6 +95,7 @@
                                 `((if ,(mk-cast label new-cnd cnd-T 'bool) ,(mk-cast label new-thn thn-T if-T) ,(mk-cast label new-thn els-T if-T))))]
                              [else (error 'typecheck "ill-typed if expression")])])]
              [`,x (guard (symbol? x)) `(,x ,(cdr (assq x env)))]
+             [`((lambda (,x : ,T1) ,e),T) (typecheck env `(lambda(,x : ,T1) ,e))]
              [`(lambda (,x) ,e) (typecheck env `(lambda(,x : dyn) ,e))]
              [`(lambda (,x : ,T1) ,e)
               (pmatch `,(typecheck `((,x . ,T1) . ,env) e)

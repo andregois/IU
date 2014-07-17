@@ -79,7 +79,7 @@
           
           [`(lambda (,x : ,T1) ,e ) (extend-hash type-obs x T1 ) `(lambda (,x : ,T1) ,(evac env e))]
           
-          [`(,e1 ,e2) ;(display `(e1 ,e1 e2 ,e2)) 
+          [`(,e1 ,e2) (display `(e1 ,e1 e2 ,e2)) 
                       (let ([v1 (evac env e1)]
                             [v2 (evac env e2)])
                        ;(display `(v1 ,v1 v2 ,v2))
@@ -101,7 +101,7 @@
     (pmatch exp 
             [`(cast ,label ,e : ,T1 -> ,T2) e]
             [`(prim ,op ,e) (if (member op '(inc zero? dec))
-                                `(,op ,(evac env e))
+                                `(,op ,(final-type env e) ,(gensym))
                                 (error "operator does not exist"))]
             [`((lambda (,x : ,T1) ,e ) ,T) (pmatch T
                                                  [`(-> ,T2 ,T3) `((lambda (,x : ,(type-lookup type-obs x T1)) ,(final-type env e)),T)]
@@ -115,63 +115,92 @@
             )))
 
 ;--------------------------------------------- tests ----------------------------------------------------
-
-
-(define start "----- start ------")
-(define end "----- end ------")
-"test 1"
-start
-
-(define test1 (typecheck '() '(lambda (x1) (inc x1 l1))))
-test1
-(display "evaluation --> ")
-(evac '() `(,test1 3))
-(final-type '() test1)
-end
-"test 2"
-start
-
-(define test2 (typecheck '() '(lambda (x2) (lambda (y2) (inc x2 l2)))))
-test2
-(display "evaluation --> ")
-(evac '() `((,test2 3)4))
-(final-type '() test2)
-end
-"test 3"
-start
-
-(define test3 (typecheck '() '(lambda (x3) (lambda (y3) (zero? y3 l3)))))
-test3
-(display "evaluation --> ")
-(evac '() `((,test3 #f)4))
-(final-type '() test3)
-
-end
-"test 4"
-
-start
-
-(define test4 (typecheck '() '(lambda (x4) (lambda (y4) (lambda (z4) (dec (dec x4 l4) l42))))))
-test4
-(display "evaluation --> ")
-(evac '() `(((,test4 3)#t)4))
-(final-type '() test4)
-end
-
-"test 5"
-
-start
-
-(define test5 (typecheck '() '(lambda (x5) (lambda (y5) (lambda (z5) (zero? (dec (dec x5 l5) l52) l53))))))
-test5
-
-(display "evaluation --> ")
-(evac '() `(((,test5 3)#f)#t))
-(final-type '() test5)       
-
-          
-          
+;
+;
+;(define start (string-append "\n" "--------------------- start --------------------" "\n"))
+;(define end (string-append "\n" "--------------------- end --------------------" "\n"))
+;"test 1"
+;start
+;
+;(define test1 (typecheck '() '(lambda (x1) (inc x1 l1))))
+;test1
+;(display "evaluation --> ")
+;(evac '() `(,test1 3))
+;(define re1 (final-type '() test1))
+;re1
+;""
+;"----------------typecheck again---------------\n"
+;(typecheck '() re1)
+;
+;end
+;"test 2"
+;start
+;
+;(define test2 (typecheck '() '(lambda (x2) (lambda (y2) (inc x2 l2)))))
+;test2
+;(display "evaluation --> ")
+;(evac '() `((,test2 3)4))
+;(define re2 (final-type '() test2))
+;re2
+;""
+;"----------------typecheck again---------------"""
+;(typecheck '() re2)
+;
+;end
+;"test 3"
+;start
+;
+;(define test3 (typecheck '() '(lambda (x3) (lambda (y3) (zero? y3 l3)))))
+;test3
+;(display "evaluation --> ")
+;(evac '() `((,test3 #f)4))
+;(define re3 (final-type '() test3))
+;re3
+;""
+;"----------------typecheck again---------------"""
+;(typecheck '() re3)
+;
+;end
+;"test 4"
+;
+;start
+;
+;(define test4 (typecheck '() '(lambda (x4) (lambda (y4) (lambda (z4) (dec (dec x4 l4) l42))))))
+;test4
+;(display "evaluation --> ")
+;(evac '() `(((,test4 3)#t)4))
+;(define re4 (final-type '() test4))
+;re4
+;""
+;"----------------typecheck again---------------" ""
+;(typecheck '() re4)
+;
+;end
+;
+;"test 5"
+;
+;start
+;
+;(define test5 (typecheck '() '(lambda (x5) (lambda (y5) (lambda (z5) (zero? (dec (dec x5 l5) l52) l53))))))
+;test5
+;
+;(display "evaluation --> ")
+;(evac '() `(((,test5 3)#f)#t))
+;(define re5 (final-type '() test5))
+;re5
+;""
+;"----------------typecheck again---------------"""
+;(typecheck '() re5)
+;          
           
 
 type-obs
+
+(define test6 (typecheck '() '((lambda (x : dyn) x ) 42 l1 )))
+test6
+(evac '() test6)
+
+
+
+;(final-type '() '((call (cast l2 (lambda (x : dyn) (cast ;l1 2 : int -> dyn)) : (-> dyn dyn) -> (-> int int)) 42) int))
 
