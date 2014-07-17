@@ -4,6 +4,7 @@
 (provide typeof)
 (provide consistent?)
 (provide meet)
+(provide typecheck)
 
 
 
@@ -86,7 +87,7 @@
                                (pmatch `(,(typecheck env e) ,(typeof op))
                                         [`((,new-e ,T) (-> ,T1 ,T2)) (guard (consistent? T T1)) `((prim ,op ,(mk-cast label new-e T T1)) ,T2)]
                                         [`,other (error 'typecheck "primitive operator")])]
-             [`(if ,cnd , thn ,els ,label) 
+             [`(if ,cnd ,thn ,els ,label) 
               (pmatch `(,(typecheck env cnd) ,(typecheck env thn) ,(typecheck env els))
                       [`((,new-cnd ,cnd-T) (,new-thn ,thn-T) (,new-els ,els-T))
                        (cond [(and (consistent? cnd-T 'bool) (consistent? thn-T els-T))
