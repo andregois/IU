@@ -27,7 +27,7 @@
             [`(int int) 'int]
             [`(bool bool) 'bool]
             [`((-> ,T11 ,T12) (-> ,T21 ,T22)) `(-> ,(meet T11 T21) ,(meet T12 T22))]
-            [`,other (error 'meet "types are not consistent")]
+            [`,other (error T1 T2)]
             )))
 
 
@@ -39,6 +39,7 @@
             [`inc '(-> int int)]
             [`dec '(-> int int)]
             [`zero? '(-> int bool)]
+            [`,other 'dyn]
             )))
 
 (define (prim op mk)
@@ -92,7 +93,8 @@
                       [`((,new-cnd ,cnd-T) (,new-thn ,thn-T) (,new-els ,els-T))
                        (cond [(and (consistent? cnd-T 'bool) (consistent? thn-T els-T))
                               (let ([if-T (meet thn-T els-T)])
-                                `((if ,(mk-cast label new-cnd cnd-T 'bool) ,(mk-cast label new-thn thn-T if-T) ,(mk-cast label new-thn els-T if-T))))]
+                                `((if ,(mk-cast label new-cnd cnd-T 'bool) ,(mk-cast label new-thn thn-T if-T) ,(mk-cast label new-els els-T if-T))))]
+                             ; era (mk-cast label new-ths els-T if-T))))]
                              [else (error 'typecheck "ill-typed if expression")])])]
              [`,x (guard (symbol? x)) `(,x ,(cdr (assq x env)))]
              [`((lambda (,x : ,T1) ,e),T) (typecheck env `(lambda(,x : ,T1) ,e))]
