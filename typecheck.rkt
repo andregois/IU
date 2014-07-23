@@ -13,8 +13,10 @@
     (pmatch `(,T1 ,T2)
             [`(,T1 dyn) #t]
             [`(dyn ,T2) #t]
-            [`(int int) #t]
-            [`(bool bool) #t]
+            [`(int ,T2) #t]
+            [`(,T1 int) #t]
+            [`(bool ,T2) #t]
+            [`(,T1 bool) #t]            
             [`((-> ,T11 ,T12)(-> ,T21 ,T22)) (and (consistent? T11 T21) (consistent? T12 T22))]
             [`,other #f]
             )))
@@ -22,10 +24,14 @@
 (define meet 
   (lambda (T1 T2)
     (pmatch `(,T1 ,T2)
-            [`(,T1 dyn) T1]
-            [`(dyn ,T2) T2]
             [`(int int) 'int]
             [`(bool bool) 'bool]
+            [`(int ,T2) 'dyn]
+            [`(,T1 int) 'dyn]
+            [`(bool ,T2) 'dyn]
+            [`(,T1 bool) 'dyn]
+            [`(,T1 dyn) 'dyn]
+            [`(dyn ,T2) 'dyn]            
             [`((-> ,T11 ,T12) (-> ,T21 ,T22)) `(-> ,(meet T11 T21) ,(meet T12 T22))]
             [`,other (error T1 T2)]
             )))
@@ -109,12 +115,12 @@
                        (cond [(consistent? e-T T) `(,(mk-cast label new-e e-T T) ,T)]
                              [else (error 'typecheck "cast between inconsistent types")])]
                       )]
-             [`(,e1 ,e2 ,label) 
+             [`(,e1 ,e2 ,label)
               (pmatch `(,(typecheck env e2) ,(typecheck env e1))
                       [`((,new-e2 ,T2) (,new-e1 dyn))
-                       `((call ,(mk-cast label new-e1 `dyn `(-> ,T2 dyn)) ,new-e2) dyn)]
-                      [`((,new-e2 ,T2) (,new-e1 (-> ,T11 ,T12))) 
-                         (cond [(consistent? T2 T11) `((call ,new-e1 ,(mk-cast label new-e2 T2 T11)) ,T12)]
+                       `((,(mk-cast label new-e1 `dyn `(-> ,T2 dyn)) ,new-e2) dyn)]
+                      [`((,new-e2 ,T2) (,new-e1 (-> ,T11 ,T12)))
+                         (cond [(consistent? T2 T11) `((,new-e1 ,(mk-cast label new-e2 T2 T11)) ,T12)]
                                [else (error 'typecheck "arg/param mismatch")])]
                       [`((,new-e2 ,T2) (new-e1 ,other-T))
                        (error 'typecheck "call to non-function")])]
@@ -122,48 +128,6 @@
 
 )))
   
-
-(define-syntax letB
-  (syntax-rules ()
-    [(letB [x e1] e2)
-     (pmatch e1
-             [`(blame ,label) `(blame ,label)]
-             [`,v (let((v x)) e2)])]))
-
-(define delta
-  (lambda (op v)
-    (pmatch op
-            [`inc(+ 1 v)]
-            [`dec(-1 v)]
-            [`zero? (= + v)])))
-
-(define shallow-consistent?
-  (lambda (T1 T2)
-    (pmatch `(,T1 ,T2)
-            [`(,T1 dyn) #t]
-            [`(dyn ,T2) #t]
-            [`(int int) #t]
-            [`(bool bool) #t]
-            [`((-> ,T11 ,T12) (-> ,T21 ,T22)) #t]
-            [`,other #f]
-            )
-    ))
-         
-
-
-
-(define apply-cast-id
-  (lambda (label1 v T1 T2)
-    (cond [(shallow-consistent? T1 T2)
-           (pmatch T1
-                   [`,dyn (pmatch v
-                                 [`(cast ,label2 ,v2 : ,T3 -> dyn)
-                                  (apply-cast-id label1 v2 T3 T2)]
-                                 )]
-                   [`,other (mk-cast label1 v T1 T2)]
-                   )]
-          [else `(blame ,label1)])))
-
 
 
 
