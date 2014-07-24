@@ -19,14 +19,20 @@
             )))
 
 (define (extend-hash hs v T )
+  (unless (not (pair? T))
+    (extend-hash hs v (car T))
+    (extend-hash hs v (cdr T))
+    )
   
+  (unless (pair? T)
+    (unless (empty? T)
     (if (hash-has-key? hs v)
-     ;   
+        
        (unless (memq T (hash-ref hs v))
           
     (hash-set! hs v (append (hash-ref hs v) (list T))))
             
-    (hash-set! hs v `(,T))))
+    (hash-set! hs v `(,T))))))
 
 (define (type-lookup hs v T)
   (if (hash-has-key? hs v)
@@ -40,14 +46,6 @@
         [else 'dyn]
         )
   )
-
-
-;;tipo de entradas
-;((lambda (x : dyn) (prim inc (cast l1 x : dyn -> int))) (-> dyn int))
-;((lambda (x : dyn) (prim inc (cast l1 x : dyn -> int))) (-> dyn int))8))
-;((lambda (x : dyn) x) (-> dyn dyn))
-;((lambda (x : dyn) (prim zero? (cast l2 x : dyn -> int))) (-> dyn bool))
-
 
 
 
@@ -98,12 +96,11 @@
           
        
           
-          [`(,e1 ,e2) ;(display `(e1 ,e1 e2 ,e2)) 
+          [`(,e1 ,e2) 
                       (let ([v1 (evac env e1)]
                             [v2 (evac env e2)])
-                      ;(display `(v1 ,v1 v2 ,v2))
                       (pmatch v1
-                              [`(lambda (,x : ,T1) ,e ,env2) ;(display 'aqui)
+                              [`(lambda (,x : ,T1) ,e ,env2) 
                                (extend-hash type-obs e T1)
                                (extend-hash type-obs e (typeof v2))
                                (evac (extend-env env2 x v2) e)
@@ -119,13 +116,13 @@
 
 (define final-type
   (lambda (env exp)
-    ;(display exp)
+   
     (pmatch exp
             
           [`,num (guard (integer? num)) num]
           [`,bool (guard (boolean? bool)) bool]
             
-          [`(cast ,label ,e : ,T1 -> ,T2) ;(display `(entrou)) 
+          [`(cast ,label ,e : ,T1 -> ,T2) 
 
                                            (final-type env e)]
             
@@ -136,7 +133,7 @@
             
           [`(lambda (,x : ,T1) ,e ) `(lambda (,x : ,(type-lookup type-obs x T1)) ,e )]
             
-            [`(,e1 ,e2); (displayln `(e1 ,e1 e2 ,e2)) 
+            [`(,e1 ,e2)
                       (let ([v1 (final-type env e1)]
                             [v2 (final-type env e2)])
                         `(,v1 ,v2))
@@ -157,15 +154,11 @@
   (let [(x (typecheck '() exp))]
    (displayln `(typed ,x))
    (displayln `("evaluation-->" ,(evac '() (car x))))
-   ;(evac '() 
+
          (final-type '() (car x))
     ;     )
     ))
     
-
-;--------------------------------------------- tests ----------------------------------------------------
-
-
 
 (define test1 '((lambda (x1) (inc x1 l1))10 l2))
 ;(displayln `(test1 ,test1))
